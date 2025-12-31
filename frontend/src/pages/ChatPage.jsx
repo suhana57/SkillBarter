@@ -17,6 +17,9 @@ export default function ChatPage() {
     const [newMessage, setNewMessage] = useState("");
     const messagesEndRef = useRef(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [showCompleteModal, setShowCompleteModal] = useState(false);
+    const [rating, setRating] = useState(5);
+    const [hasClickedVideo, setHasClickedVideo] = useState(false);
 
     // Fetch initial data
     useEffect(() => {
@@ -51,7 +54,8 @@ export default function ChatPage() {
     useEffect(() => {
         if (selectedChat) {
             fetchMessages(selectedChat.partner._id);
-            socket.emit("join_room", selectedChat.partner._id); // Maybe not needed if backend emits to user ID room
+            socket.emit("join_room", selectedChat.partner._id);
+            setHasClickedVideo(false); // Reset on chat switch
         }
     }, [selectedChat]);
 
@@ -137,11 +141,31 @@ export default function ChatPage() {
 
     const handleGoogleMeet = () => {
         window.open('https://meet.google.com/new', '_blank');
+        // Always set to true to trigger UI check, correct visibility logic is in the render key
+        setHasClickedVideo(true);
     };
 
     const handleFileUpload = () => {
         // MVP: Just show an alert or trigger file input (dummy)
         alert("File sharing feature coming soon!");
+    };
+
+    const handleCompleteSession = async () => {
+        if (!selectedChat) return;
+        try {
+            const res = await axios.post('http://localhost:5000/chat/complete-session',
+                { requestId: selectedChat.requestId, rating },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            alert(`Session ended! ${res.data.message}`);
+            setShowCompleteModal(false);
+            setHasClickedVideo(false); // Hide button after completion
+            fetchConversations(); // Refresh data
+            // Optionally refresh user credits logic here if we had user state updater
+        } catch (error) {
+            console.error(error);
+            alert(error.response?.data?.message || "Failed to complete session");
+        }
     };
 
     return (
@@ -248,6 +272,14 @@ export default function ChatPage() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">
+                                {hasClickedVideo && (
+                                    <button
+                                        onClick={() => setShowCompleteModal(true)}
+                                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition flex items-center gap-1"
+                                    >
+                                        <Check size={16} /> Complete Session
+                                    </button>
+                                )}
                                 <button
                                     onClick={handleGoogleMeet}
                                     className="p-2 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white transition-colors"
@@ -313,6 +345,58 @@ export default function ChatPage() {
                     </div>
                 )}
             </div>
-        </div>
+            {/* Complete Session Modal */}
+            <AnimatePresence>
+                {showCompleteModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-gray-900 border border-white/10 p-6 rounded-3xl w-full max-w-sm shadow-2xl text-center"
+                        >
+                            <h2 className="text-xl font-bold text-white mb-2">Rate & Pay</h2>
+                            <p className="text-gray-400 text-sm mb-6">
+                                1 credit will be transferred to the tutor. Please rate your experience.
+                            </p>
+
+                            <div className="flex justify-center gap-2 mb-6">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        onClick={() => setRating(star)}
+                                        className={`transform transition-all duration-200 hover:scale-110 p-1 ${rating >= star ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]' : 'text-gray-600 hover:text-gray-500'}`}
+                                    >
+                                        <svg width="40" height="40" viewBox="0 0 24 24" fill={rating >= star ? "currentColor" : "none"} stroke="currentColor" strokeWidth={rating >= star ? "0" : "1.5"} strokeLinecap="round" strokeLinejoin="round">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                        </svg>
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowCompleteModal(false)}
+                                    className="flex-1 py-3 text-gray-400 hover:text-white font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleCompleteSession}
+                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold transition shadow-lg shadow-green-900/20"
+                                >
+                                    Confirm
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div >
     );
 }

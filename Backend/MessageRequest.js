@@ -6,6 +6,7 @@ const MessageRequestSchema = new mongoose.Schema({
     status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
     scheduledTime: { type: Date }, // Optional: when they want to chat
     note: { type: String }, // Optional: why they want to connect
+    isCompleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }
 });
 

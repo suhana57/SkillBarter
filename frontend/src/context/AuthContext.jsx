@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
+import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 
@@ -10,21 +11,28 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (token) {
-            try {
-                const decoded = jwtDecode(token);
-                // Ideally we should verify token validity with backend or check expiry
-                if (decoded.exp * 1000 < Date.now()) {
+        const fetchUser = async () => {
+            if (token) {
+                try {
+                    const decoded = jwtDecode(token);
+                    if (decoded.exp * 1000 < Date.now()) {
+                        logout();
+                    } else {
+                        // Fetch full user details
+                        const { data } = await axios.get("http://localhost:5000/auth/me", {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        setUser(data);
+                    }
+                } catch (error) {
+                    console.error("Auth verification failed", error);
                     logout();
-                } else {
-                    setUser(decoded);
-                    // We might want to fetch full user details here if needed
                 }
-            } catch (error) {
-                logout();
             }
-        }
-        setLoading(false);
+            setLoading(false);
+        };
+
+        fetchUser();
     }, [token]);
 
     const login = (userData, newToken) => {

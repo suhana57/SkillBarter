@@ -88,7 +88,10 @@ router.get("/conversations", auth, async (req, res) => {
                 : reqObj.sender;
             return {
                 requestId: reqObj._id,
-                partner
+                partner,
+                requestId: reqObj._id,
+                isSender: reqObj.sender._id.toString() === req.userId,
+                isCompleted: reqObj.isCompleted
             };
         });
 
@@ -125,6 +128,56 @@ router.get("/:userId", auth, async (req, res) => {
         res.json(messages);
     } catch (error) {
         res.status(500).json({ message: "Something went wrong" });
+    }
+});
+
+// Complete Session & Rate
+router.post("/complete-session", auth, async (req, res) => {
+    try {
+        const { requestId, rating } = req.body;
+        const request = await MessageRequest.findById(requestId);
+
+        if (!request) return res.status(404).json({ message: "Request not found" });
+
+        // Identify Payer (Current User) and Payee (The other person)
+        const payerId = req.userId;
+        let payeeId;
+
+        if (request.sender.toString() === payerId) {
+            payeeId = request.recipient;
+        } else if (request.recipient.toString() === payerId) {
+            payeeId = request.sender;
+        } else {
+            return res.status(403).json({ message: "You are not part of this session" });
+        }
+
+        const student = await SkillUser.findById(payerId);
+        const teacher = await SkillUser.findById(payeeId);
+
+        if (student.credits < 1) {
+            return res.status(400).json({ message: "Insufficient credits" });
+        }
+
+        // Deduct credit from Payer
+        student.credits -= 1;
+        await student.save();
+
+        // Add credit to Payee
+        teacher.credits += 1;
+
+        // Add Rating to Payee
+        if (rating) {
+            teacher.ratings.push({ star: rating, reviewer: payerId });
+        }
+        await teacher.save();
+
+        // request.isCompleted = true; // Allow multiple sessions
+        // await request.save();
+
+        res.json({ message: "Session completed, credit transferred", credits: student.credits });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
     }
 });
 

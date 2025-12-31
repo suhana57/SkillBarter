@@ -11,10 +11,14 @@ const UserSchema = new mongoose.Schema({
         level: { type: Number, default: 1 } // 1-5
     }],
     embedding: [Number], // Flattened embedding for simplicity or weighted average
-    credits: { type: Number, default: 2 },
+    credits: { type: Number, default: 5 },
     transactions: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Transaction'
+    }],
+    ratings: [{
+        star: Number,
+        reviewer: { type: mongoose.Schema.Types.ObjectId, ref: 'SkillUser' }
     }]
 });
 
