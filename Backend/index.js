@@ -8,7 +8,7 @@ import authRoutes from "./routes/auth.js";
 import sessionRoutes from "./routes/session.js";
 import creditRoutes from "./routes/credits.js";
 import chatRoutes from "./routes/chat.js";
-import graphRoutes from "./routes/knowledgeGraph.js";
+
 import Message from "./Message.js";
 import dotenv from "dotenv";
 dotenv.config();
@@ -24,7 +24,7 @@ app.use("/sessions", sessionRoutes);
 app.use("/match", matchRoutes);
 app.use("/credits", creditRoutes);
 app.use("/chat", chatRoutes);
-app.use("/graph", graphRoutes);
+
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -47,12 +47,12 @@ io.on("connection", (socket) => {
 
         // Save to DB
         try {
-            await Message.create({ sender, recipient, content });
+            const savedMessage = await Message.create({ sender, recipient, content });
 
             // Emit to recipient's room
-            io.to(recipient).emit("receive_message", data);
+            io.to(recipient).emit("receive_message", savedMessage);
             // Also emit back to sender (or handle optimistically on frontend)
-            io.to(sender).emit("receive_message", data);
+            io.to(sender).emit("receive_message", savedMessage);
         } catch (err) {
             console.error(err);
         }

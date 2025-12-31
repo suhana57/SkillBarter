@@ -70,7 +70,7 @@ export default function Sidebar() {
             <div className="flex flex-col gap-2 flex-1">
                 <SidebarItem icon={LayoutDashboard} label="Dashboard" path="/dashboard" isOpen={isOpen} />
                 <SidebarItem icon={User} label="Profile" path="/profile" isOpen={isOpen} />
-                <SidebarItem icon={Network} label="Knowledge Graph" path="/graph" isOpen={isOpen} />
+                <SidebarItem icon={MessageSquare} label="Chat" path="/chat" isOpen={isOpen} />
                 {/* Add chat or other links here if they were separate pages */}
             </div>
 

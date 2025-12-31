@@ -5,7 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import LandingPage from "./pages/LandingPage";
 import ProtectedRoute from "./auth/ProtectedRoute";
-import KnowledgeGraph from "./pages/KnowledgeGraph";
+import ChatPage from "./pages/ChatPage";
 import { AuthProvider } from "./context/AuthContext";
 import Layout from "./components/Layout";
 
@@ -25,9 +25,9 @@ export default function App() {
               </ProtectedRoute>
             } />
 
-            <Route path="/graph" element={
+            <Route path="/chat" element={
               <ProtectedRoute>
-                <KnowledgeGraph />
+                <ChatPage />
               </ProtectedRoute>
             } />
 

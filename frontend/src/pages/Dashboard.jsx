@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { fetchMatches, fetchUser } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import ChatInterface from "../chat/ChatInterface";
+import RequestModal from "../components/RequestModal";
 import { Canvas } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
 
@@ -58,8 +58,8 @@ export default function Dashboard() {
                         <span className="font-semibold">{user?.username}</span>
                         <span className="text-xs text-yellow-400">Credits: {user?.credits || 0}</span>
                     </div>
-                    <button onClick={() => navigate("/graph")} className="text-sm hover:text-blue-400 transition">
-                        Knowledge Graph
+                    <button onClick={() => navigate("/chat")} className="text-sm hover:text-blue-400 transition">
+                        Inbox
                     </button>
                     <button onClick={logout} className="text-sm bg-red-600 hover:bg-red-700 px-3 py-1 rounded transition">
                         Logout
@@ -140,7 +140,15 @@ export default function Dashboard() {
 
             {/* Chat Overlay */}
             {activeChat && (
-                <ChatInterface recipient={activeChat} onClose={() => setActiveChat(null)} />
+                <RequestModal
+                    isOpen={!!activeChat}
+                    recipientId={activeChat._id}
+                    onClose={() => setActiveChat(null)}
+                    onSuccess={() => {
+                        setActiveChat(null);
+                        alert("Request sent successfully!"); // Simple feedback
+                    }}
+                />
             )}
         </div>
     );
